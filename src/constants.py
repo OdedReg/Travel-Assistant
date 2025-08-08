@@ -1,0 +1,1 @@
+NOT_FOUND_ERROR_INSTRUCTION = "try to answer without it, or ask the user to rephrase his question."

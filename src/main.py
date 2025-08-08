@@ -3,7 +3,7 @@ from datetime import datetime
 from google import genai
 from google.genai import types
 
-from src.travel_tools import get_destination_weather, get_currency_exchange
+from src.travel_tools import get_destination_weather, get_currency_exchange, get_local_attractions_opentripmap
 from utils import get_env_variable, get_all_currency_codes
 
 # Configure the client
@@ -22,11 +22,11 @@ Currency codes: {get_all_currency_codes()}
 Answer with concise and relevant responses.
 """
 
-user_prompt = "what are the best attractions near London, England?"
+user_prompt = "what are the most famous waters parks near tel aviv?"
 
 config = types.GenerateContentConfig(
     system_instruction=system_prompt,
-    tools=[get_destination_weather, get_currency_exchange]
+    tools=[get_local_attractions_opentripmap, get_destination_weather, get_currency_exchange]
 )
 
 # Make the request

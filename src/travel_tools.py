@@ -3,15 +3,118 @@ from datetime import datetime, timedelta
 
 import requests
 
+from src.constants import NOT_FOUND_ERROR_INSTRUCTION
 from src.tools_input import Date
 from utils import get_env_variable
 
-# Configuration - Set your API keys as environment variables
 OPENWEATHER_API_KEY = get_env_variable('OPENWEATHER_API_KEY')
 AMADEUS_API_KEY = os.getenv('AMADEUS_API_KEY')
 AMADEUS_API_SECRET = os.getenv('AMADEUS_API_SECRET')
-GOOGLE_PLACES_API_KEY = os.getenv('GOOGLE_PLACES_API_KEY')
+OPEN_TRIP_MAP_API_KEY = get_env_variable('OPEN_TRIP_MAP_API_KEY')
 EXCHANGERATE_API_KEY = get_env_variable('EXCHANGERATE_API_KEY')
+
+def get_local_attractions_opentripmap(destination: str, kind: str, radius: int = 10000, limit: int = 5) -> dict:
+    f"""
+     Retrieve top-rated local attractions near a given destination using the OpenTripMap API.
+
+     Args:
+         destination (str): The name of the city or location to search around (e.g., "Rome", "Tokyo").
+         kind (str):  attraction type to filter by. Allowed values: [
+    "natural",
+    "beaches",
+    "waterfalls",
+    "nature_reserves",
+    "volcanoes",
+    "caves",
+    "mountain_peaks",
+    "museums",
+    "art_galleries",
+    "theatres_and_entertainments",
+    "sculptures",
+    "gardens_and_parks",
+    "aquariums",
+    "zoos",
+    "castles",
+    "historic_districts",
+    "monuments",
+    "archaeology",
+    "pyramids",
+    "battlefields",
+    "churches",
+    "mosques",
+    "synagogues",
+    "hindu_temples",
+    "monasteries",
+    "towers",
+    "bridges",
+    "lighthouses",
+    "skyscrapers",
+    "palaces",
+    "amusement_parks",
+    "water_parks",
+    "cinemas",
+    "nightclubs",
+    "view_points",
+    "sundials",
+    "unclassified_objects"
+    ].
+         radius (int, optional): The search radius in meters. Default is 10,000 (10 km).
+         limit (int, optional): The maximum number of attractions to return. Default is 5.
+
+     Returns:
+         dict: A dictionary containing:
+             - 'attractions': A list of dictionaries, each containing:
+                 - 'name': Name of the attraction
+                 - 'kind': Types/categories
+                 - 'description': Short Wikipedia-style summary (if available)
+                 - 'url': Link to a Wikipedia article (if available)
+     """
+    print("get_local_attractions_opentripmap")
+    try:
+        # Step 1: Get coordinates of the destination
+        geocode_url = f"https://api.opentripmap.com/0.1/en/places/geoname"
+        geocode_params = {'name': destination, 'apikey': OPEN_TRIP_MAP_API_KEY}
+        geo_res = requests.get(geocode_url, params=geocode_params).json()
+
+        if 'lat' not in geo_res or 'lon' not in geo_res:
+            return {"error": f"Destination '{destination}' not found. {NOT_FOUND_ERROR_INSTRUCTION}"}
+
+        lat, lon = geo_res['lat'], geo_res['lon']
+
+        # Step 2: Get attractions near location
+        places_url = f"https://api.opentripmap.com/0.1/en/places/radius"
+        places_params = {
+            'kinds': kind,
+            'radius': radius,
+            'lon': lon,
+            'lat': lat,
+            'limit': limit,
+            'rate': 3,  # Higher rating
+            'format': 'json',
+            'apikey': OPEN_TRIP_MAP_API_KEY
+        }
+        places = requests.get(places_url, params=places_params).json()
+
+        # Step 3: Get detailed info for each place
+        detailed_attractions = []
+        for place in places:
+            xid = place.get('xid')
+            detail_url = f"https://api.opentripmap.com/0.1/en/places/xid/{xid}"
+            detail = requests.get(detail_url, params={'apikey': OPEN_TRIP_MAP_API_KEY}).json()
+
+            detailed_attractions.append({
+                'name': detail.get('name'),
+                'kind': detail.get('kinds'),
+                'description': detail.get('wikipedia_extracts', {}).get('text', ''),
+                'url': detail.get('wikipedia', ''),
+            })
+        print("oded:", detailed_attractions)
+        return {
+            'attractions': detailed_attractions,
+        }
+
+    except Exception as e:
+        return {"error": f"Attractions API error: {str(e)}. {NOT_FOUND_ERROR_INSTRUCTION}."}
 
 
 def get_destination_weather(destination: str, travel_date: Date) -> dict:
@@ -25,8 +128,6 @@ def get_destination_weather(destination: str, travel_date: Date) -> dict:
         A dictionary containing weather information including temperature, conditions, and recommendations.
     """
     print("get_destination_weather")
-    if not OPENWEATHER_API_KEY:
-        return {"error": "OpenWeather API key not configured"}
 
     try:
         # Get coordinates for the destination
@@ -93,7 +194,7 @@ def get_destination_weather(destination: str, travel_date: Date) -> dict:
         }
 
     except Exception as e:
-        return {"error": f"Weather API error: {str(e)}, , assume the weather is based on your knowledge."}
+        return {"error": f"Weather API error: {str(e)}, assume the weather is based on your knowledge."}
 
 
 def get_currency_exchange(from_currency: str, to_currency: str, amount: float) -> dict:
@@ -131,5 +232,6 @@ def get_currency_exchange(from_currency: str, to_currency: str, amount: float) -
         }
 
     except Exception as e:
-        return {"error": f"Currency exchange error: {str(e)}, try to answer without it, or ask the user to rephrase his question."}
+        return {"error": f"Currency exchange error: {str(e)}. {NOT_FOUND_ERROR_INSTRUCTION}."}
 
+# print(get_local_attractions_opentripmap("Tel Aviv",kind="park", limit=5))
