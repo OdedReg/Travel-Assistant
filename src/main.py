@@ -1,40 +1,97 @@
-from datetime import datetime
+import gradio as gr
 
-from google import genai
-from google.genai import types
+from src.travel_assistant import chat_with_agent
 
-from src.travel_tools import get_destination_weather, get_currency_exchange, get_local_attractions_opentripmap
-from utils import get_env_variable, get_all_currency_codes
+with gr.Blocks(
+        title="Travel Agent Chat",
+        theme=gr.themes.Soft(
+            primary_hue="green",
+            secondary_hue="blue",
+        )
+) as demo:
+    gr.Markdown("<h1 style='text-align: center;'>🌍 Travel Agent Chat</h1>")
+    gr.Markdown(
+        """
+        Ask me anything about travel! I can help you with:
+        - Weather information for destinations
+        - Currency exchange rates
+        - Local attractions and points of interest
+        - Travel recommendations
+        - And much more!
+        """
+    )
 
-# Configure the client
-client = genai.Client(api_key=get_env_variable("GOOGLE_API_KEY"))
+    with gr.Row():
+        msg = gr.Textbox(
+            placeholder="Ask me about travel...",
+            container=False,
+            scale=7,
+            show_label=False
+        )
+        submit_btn = gr.Button("Send", scale=1, variant="primary")
+        clear_btn = gr.Button("Clear", scale=1, variant="secondary")
 
+    chatbot = gr.Chatbot(
+        height=500,
+        show_label=False,
+        container=True,
+        show_copy_button=True,
+        bubble_full_width=False,
+        avatar_images=("https://cdn-icons-png.flaticon.com/512/1077/1077012.png",
+                       "https://cdn-icons-png.flaticon.com/512/684/684908.png")
+    )
 
-system_prompt = f"""
-You are a Travel Assistant tasked with answering user questions with effective answers that feel natural and helpful.
+    # Event handlers
+    def clear_chat():
+        return "", []
 
-You are provided with multiple tools to help you answer the user questions. Beside of them ,you can add your own knowledge to the answer.
-If you dont find any of the tools relevant, try to answer using your own knowledge.
+    def submit_message(message, chatbot):
+        return "", chatbot + [[message, ""]]
 
-Today is {datetime.now()}. 
-Currency codes: {get_all_currency_codes()}
+    # Connect the events
+    msg.submit(
+        submit_message,
+        [msg, chatbot],
+        [msg, chatbot],
+        queue=False
+    ).then(
+        chat_with_agent,
+        [chatbot],
+        [chatbot]
+    )
 
-Answer with concise and relevant responses.
-"""
+    submit_btn.click(
+        submit_message,
+        [msg, chatbot],
+        [msg, chatbot],
+        queue=False
+    ).then(
+        chat_with_agent,
+        [chatbot],
+        [chatbot]
+    )
 
-user_prompt = "what are the most famous waters parks near tel aviv?"
+    clear_btn.click(clear_chat, outputs=[msg, chatbot])
 
-config = types.GenerateContentConfig(
-    system_instruction=system_prompt,
-    tools=[get_local_attractions_opentripmap, get_destination_weather, get_currency_exchange]
-)
+    # Add some example queries
+    gr.Examples(
+        examples=[
+            "What's the weather like in Paris?",
+            "What are the most famous water parks near Tel Aviv?",
+            "Convert 100 USD to EUR",
+            "What are the top attractions in Tokyo?",
+            "Tell me about local currency in Thailand"
+        ],
+        inputs=msg,
+        label="Try these examples:"
+    )
 
-# Make the request
-response = client.models.generate_content(
-    model="gemini-2.5-flash",
-    config=config,
-    contents=user_prompt,
-)
-print(response)
-print("-"*50)
-print(response.text)
+# Launch the app
+if __name__ == "__main__":
+    demo.queue(max_size=20)  # Enable queuing for streaming
+    demo.launch(
+        server_name="127.0.0.1",
+        server_port=7860,  # Default Gradio port
+        share=False,  # Set to True if you want a public link
+        debug=True  # Enable debug mode
+    )

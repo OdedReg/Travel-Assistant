@@ -27,7 +27,6 @@ def get_all_currency_codes() -> dict:
     Returns:
         A dictionary containing a list of supported currency codes, or an error message.
     """
-    print("get_all_currency_codes")
     url = f"https://v6.exchangerate-api.com/v6/{get_env_variable('EXCHANGERATE_API_KEY')}/codes"
 
     try:
@@ -43,3 +42,5 @@ def get_all_currency_codes() -> dict:
 
     except requests.exceptions.RequestException as e:
         return {"error": f"An error occurred during the API request: {str(e)}."}
+
+

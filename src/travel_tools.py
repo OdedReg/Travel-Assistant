@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 import requests
 
-from src.constants import NOT_FOUND_ERROR_INSTRUCTION
+from src.constants import NOT_FOUND_ERROR_INSTRUCTION, ALLOWED_KINDS
 from src.tools_input import Date
 from utils import get_env_variable
 
@@ -19,45 +19,7 @@ def get_local_attractions_opentripmap(destination: str, kind: str, radius: int =
 
      Args:
          destination (str): The name of the city or location to search around (e.g., "Rome", "Tokyo").
-         kind (str):  attraction type to filter by. Allowed values: [
-    "natural",
-    "beaches",
-    "waterfalls",
-    "nature_reserves",
-    "volcanoes",
-    "caves",
-    "mountain_peaks",
-    "museums",
-    "art_galleries",
-    "theatres_and_entertainments",
-    "sculptures",
-    "gardens_and_parks",
-    "aquariums",
-    "zoos",
-    "castles",
-    "historic_districts",
-    "monuments",
-    "archaeology",
-    "pyramids",
-    "battlefields",
-    "churches",
-    "mosques",
-    "synagogues",
-    "hindu_temples",
-    "monasteries",
-    "towers",
-    "bridges",
-    "lighthouses",
-    "skyscrapers",
-    "palaces",
-    "amusement_parks",
-    "water_parks",
-    "cinemas",
-    "nightclubs",
-    "view_points",
-    "sundials",
-    "unclassified_objects"
-    ].
+         kind (str):  attraction type to filter by. Allowed values: {list(ALLOWED_KINDS)}.
          radius (int, optional): The search radius in meters. Default is 10,000 (10 km).
          limit (int, optional): The maximum number of attractions to return. Default is 5.
 
@@ -69,7 +31,8 @@ def get_local_attractions_opentripmap(destination: str, kind: str, radius: int =
                  - 'description': Short Wikipedia-style summary (if available)
                  - 'url': Link to a Wikipedia article (if available)
      """
-    print("get_local_attractions_opentripmap")
+    if kind not in ALLOWED_KINDS:
+        return {"error": f"Invalid 'kind': {kind}. Must be one of: {', '.join(ALLOWED_KINDS)}. {NOT_FOUND_ERROR_INSTRUCTION}"}
     try:
         # Step 1: Get coordinates of the destination
         geocode_url = f"https://api.opentripmap.com/0.1/en/places/geoname"
@@ -108,7 +71,6 @@ def get_local_attractions_opentripmap(destination: str, kind: str, radius: int =
                 'description': detail.get('wikipedia_extracts', {}).get('text', ''),
                 'url': detail.get('wikipedia', ''),
             })
-        print("oded:", detailed_attractions)
         return {
             'attractions': detailed_attractions,
         }
@@ -117,17 +79,16 @@ def get_local_attractions_opentripmap(destination: str, kind: str, radius: int =
         return {"error": f"Attractions API error: {str(e)}. {NOT_FOUND_ERROR_INSTRUCTION}."}
 
 
-def get_destination_weather(destination: str, travel_date: Date) -> dict:
+def get_destination_weather_forecast(destination: str, travel_date: Date) -> dict:
     """Get weather forecast for a destination.
 
     Args:
-        destination: The destination city/country (e.g., "Paris, France")
-        travel_date: Travel Date
+        destination (str): The destination city/country (e.g., "Paris, France")
+        travel_date (Date): Travel Date
 
     Returns:
         A dictionary containing weather information including temperature, conditions, and recommendations.
     """
-    print("get_destination_weather")
 
     try:
         # Get coordinates for the destination
@@ -208,7 +169,6 @@ def get_currency_exchange(from_currency: str, to_currency: str, amount: float) -
     Returns:
         A dictionary containing exchange rate and converted amount.
     """
-    print("get_currency_exchange")
     try:
         # Using exchangerate-api.com (free tier available)
         url = f"https://v6.exchangerate-api.com/v6/{EXCHANGERATE_API_KEY}/latest/{from_currency}"
