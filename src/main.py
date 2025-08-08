@@ -35,10 +35,9 @@ with gr.Blocks(
         height=500,
         show_label=False,
         container=True,
-        show_copy_button=True,
-        bubble_full_width=False,
+        show_copy_button=False,
         avatar_images=("https://cdn-icons-png.flaticon.com/512/1077/1077012.png",
-                       "https://cdn-icons-png.flaticon.com/512/684/684908.png")
+                       "https://cdn-icons-png.flaticon.com/512/684/684908.png"),
     )
 
     # Event handlers
@@ -46,7 +45,7 @@ with gr.Blocks(
         return "", []
 
     def submit_message(message, chatbot):
-        return "", chatbot + [[message, ""]]
+        return "", chatbot + [[message, None]]
 
     # Connect the events
     msg.submit(
@@ -76,9 +75,8 @@ with gr.Blocks(
     # Add some example queries
     gr.Examples(
         examples=[
-            "What's the weather like in Paris?",
+            "Help me build a packing suggestions for a business trip to Paris in October",
             "What are the most famous water parks near Tel Aviv?",
-            "Convert 100 USD to EUR",
             "What are the top attractions in Tokyo?",
             "Tell me about local currency in Thailand"
         ],

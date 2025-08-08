@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import requests
 
 from src.constants import NOT_FOUND_ERROR_INSTRUCTION, ALLOWED_KINDS
-from src.tools_input import Date
 from utils import get_env_variable
 
 OPENWEATHER_API_KEY = get_env_variable('OPENWEATHER_API_KEY')
@@ -79,16 +78,29 @@ def get_local_attractions_opentripmap(destination: str, kind: str, radius: int =
         return {"error": f"Attractions API error: {str(e)}. {NOT_FOUND_ERROR_INSTRUCTION}."}
 
 
-def get_destination_weather_forecast(destination: str, travel_date: Date) -> dict:
-    """Get weather forecast for a destination.
+def get_destination_weather_forecast(destination: str, day: int, month: int, year: int) -> dict:
+    f"""
+    Get weather forecast for a destination from {datetime.today()} to {datetime.today() + timedelta(days=5)}.
 
     Args:
         destination (str): The destination city/country (e.g., "Paris, France")
-        travel_date (Date): Travel Date
+        day (int): Day of the month (1–31)
+        month (int): Month (1–12)
+        year (int): Year (2025–2050)
 
     Returns:
-        A dictionary containing weather information including temperature, conditions, and recommendations.
+        A dictionary with weather forecast information or fallback message.
     """
+    travel_datetime = datetime(year=year, month=month, day=day)
+
+    # Check if date is within 5 days from now
+    today = datetime.today()
+    if travel_datetime > today + timedelta(days=5):
+        return {
+            "destination": destination,
+            "forecasts": [],
+            "message": f"No forecast is available for {travel_datetime.strftime('%Y-%m-%d')} (beyond 5-day limit). {NOT_FOUND_ERROR_INSTRUCTION}."
+        }
 
     try:
         # Get coordinates for the destination
@@ -119,19 +131,12 @@ def get_destination_weather_forecast(destination: str, travel_date: Date) -> dic
         weather_response = requests.get(weather_url, params=weather_params)
         weather_data = weather_response.json()
 
-        # Parse relevant forecast data
-        travel_datetime = datetime(
-            year=travel_date.year,
-            month=travel_date.month,
-            day=travel_date.day
-        )
         relevant_forecasts = []
-
         for forecast in weather_data['list']:
             forecast_datetime = datetime.fromtimestamp(forecast['dt'])
             if travel_datetime.date() <= forecast_datetime.date() <= (travel_datetime + timedelta(days=5)).date():
                 relevant_forecasts.append({
-                    'date': forecast_datetime.strftime('%Y-%m-%d'),
+                    'date': forecast_datetime.strftime('%Y-%m-%d %H:%M'),
                     'temperature': {
                         'temp': forecast['main']['temp'],
                         'feels_like': forecast['main']['feels_like'],
@@ -142,7 +147,6 @@ def get_destination_weather_forecast(destination: str, travel_date: Date) -> dic
                     'humidity': forecast['main']['humidity'],
                     'wind_speed': forecast['wind']['speed']
                 })
-            # TODO: what if the dates are not in the timedelta
 
         return {
             'destination': destination,
@@ -194,4 +198,4 @@ def get_currency_exchange(from_currency: str, to_currency: str, amount: float) -
     except Exception as e:
         return {"error": f"Currency exchange error: {str(e)}. {NOT_FOUND_ERROR_INSTRUCTION}."}
 
-# print(get_local_attractions_opentripmap("Tel Aviv",kind="park", limit=5))
+print(get_destination_weather_forecast("Paris",day=8, month=8, year=2025))
