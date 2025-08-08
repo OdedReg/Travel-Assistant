@@ -51,36 +51,42 @@ config = types.GenerateContentConfig(
     tools=[get_local_attractions_opentripmap, get_destination_weather_forecast, get_currency_exchange]
 )
 
-
 def chat_with_agent(chatbot):
     """
-    Stream the response from Gemini API to the chatbot with conversation memory
+    Stream the response from Gemini API with proper handling of function calls and thoughts
     """
-    try:
-        # Build conversation history
-        conversation_history = conv_manager.build_conversation_history(chatbot)
+    # Build conversation history
+    conversation_history = conv_manager.build_conversation_history(chatbot)
 
-        # Make the streaming request with conversation history
-        response = client.models.generate_content_stream(
-            model="gemini-2.5-flash",
-            config=config,
-            contents=conversation_history,
-        )
+    # Make the streaming request
+    response = client.models.generate_content_stream(
+        model="gemini-2.5-flash",
+        config=config,
+        contents=conversation_history,
+    )
 
-        # Initialize the response text
-        full_response = ""
+    full_response = ""
 
-        # Stream the response
-        for chunk in response:
-            if chunk.text:
-                full_response += chunk.text
-                # Update the last message in chatbot with the accumulated response
-                if chatbot:
-                    chatbot[-1] = [chatbot[-1][0], full_response]  # Properly update the tuple
-                    yield chatbot
+    for chunk in response:
+        chunk_text = ""
 
-    except Exception as e:
-        error_message = f"Sorry, I encountered an error: {str(e)}"
-        if chatbot:
-            chatbot[-1] = [chatbot[-1][0], error_message]  # Properly update the tuple
-        yield chatbot
+        # Handle the response structure properly
+        if hasattr(chunk, 'candidates') and chunk.candidates:
+            candidate = chunk.candidates[0]
+            if hasattr(candidate, 'content') and candidate.content:
+
+                for part in candidate.content.parts:
+                    if hasattr(part, 'text') and part.text:
+                        # Regular text content
+                        chunk_text += part.text
+
+        # Fallback for simple text responses
+        elif hasattr(chunk, 'text'):
+            chunk_text = chunk.text
+
+        # Update response if we got new text
+        if chunk_text:
+            full_response += chunk_text
+            if chatbot:
+                chatbot[-1] = [chatbot[-1][0], full_response]
+                yield chatbot
