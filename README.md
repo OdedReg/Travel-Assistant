@@ -1,6 +1,6 @@
 # <div align="center">🌍 Travel Assistant Chat</div>
 
-<div align="center">An intelligent travel planning assistant with advanced conversational AI capabilities</div>
+<div align="center">An intelligent travel planning agent with advanced conversational AI capabilities</div>
 <br>
 <p align="center">
   <img src="travel_image.png" width="700">
