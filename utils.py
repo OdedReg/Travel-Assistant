@@ -1,8 +1,11 @@
 import os
-from typing import Any
+from typing import Any, List
 
 import requests
 from dotenv import load_dotenv
+from google import genai
+from google.genai import Client
+from google.genai.types import GenerateContentConfig
 
 
 def get_env_variable(var_name: str) -> Any:
@@ -43,4 +46,49 @@ def get_all_currency_codes() -> dict:
     except requests.exceptions.RequestException as e:
         return {"error": f"An error occurred during the API request: {str(e)}."}
 
+def get_genai_client() -> genai.Client:
+    return genai.Client(api_key=get_env_variable("GOOGLE_API_KEY"))
 
+
+def generate_streaming_response(client: Client, chatbot: List,  model_name: str, config: GenerateContentConfig, contents: List):
+    """
+    Generate a streaming response from a specified model, updating the conversation incrementally.
+
+    Args:
+        client (Client): The client to use.
+        model_name (str): The name of the model to use (e.g., "gemini-2.5-flash").
+        config (dict): Configuration for the model.
+        contents (str): The contents of the conversation to pass to the model.
+
+    Yields:
+        chatbot: Updated chatbot responses incrementally.
+    """
+    response = client.models.generate_content_stream(
+        model=model_name,
+        config=config,
+        contents=contents,
+    )
+
+    full_response = ""
+    for chunk in response:
+        chunk_text = ""
+
+        # Handle the response structure properly
+        if hasattr(chunk, 'candidates') and chunk.candidates:
+            candidate = chunk.candidates[0]
+            if hasattr(candidate, 'content') and candidate.content:
+                for part in candidate.content.parts:
+                    if hasattr(part, 'text') and part.text:
+                        # Regular text content
+                        chunk_text += part.text
+
+        # Fallback for simple text responses
+        elif hasattr(chunk, 'text'):
+            chunk_text = chunk.text
+
+        # Update response if we got new text
+        if chunk_text:
+            full_response += chunk_text
+            if chatbot:
+                chatbot[-1] = [chatbot[-1][0], full_response]
+                yield chatbot

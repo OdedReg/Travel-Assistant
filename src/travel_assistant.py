@@ -1,16 +1,17 @@
-from google import genai
+import json
+
 from google.genai import types
 
-from src.constants import system_prompt
+from src.constants import travel_system_prompt, corrected_traveler_system_prompt, verifier_system_prompt, \
+    VERIFICATION_SCHEMA, VERIFIER_MODEL, TRAVELER_MODEL
 from src.travel_tools import get_destination_weather_forecast, get_currency_exchange, get_local_attractions_opentripmap
-from utils import get_env_variable
-
-client = genai.Client(api_key=get_env_variable("GOOGLE_API_KEY"))
+from utils import get_genai_client, generate_streaming_response
 
 
 class ConversationManager:
     def __init__(self, max_history=10):
         self.max_history = max_history  # Limit conversation history to prevent token overflow
+        self.client = get_genai_client()
 
     def build_conversation_history(self, chatbot):
         """
@@ -43,50 +44,108 @@ class ConversationManager:
         return conversation
 
 
-# Initialize conversation manager
+    def verify(self, chatbot, conversation_history):
+        if chatbot:
+            # Get current conversation for verification (no UI indication)
+            conversation_for_verification = []
+            for user_msg, bot_msg in chatbot:
+                if user_msg and bot_msg:
+                    conversation_for_verification.append((user_msg, bot_msg))
+
+            # Verify silently in background
+            verification = self.verify_response(conversation_for_verification)
+
+            if verification["needs_correction"]:
+                # Replace with error message and start regeneration
+                error_message = "I apologize, but my response contained inaccurate information. Let me provide you with a corrected answer..."
+                chatbot[-1] = [chatbot[-1][0], error_message]
+                yield chatbot
+
+                # Regenerate with feedback (silently)
+                formatted_corrected_traveler_system_prompt = corrected_traveler_system_prompt.format(travel_system_prompt=travel_system_prompt, feedback=verification['feedback'])
+                regenerate_config = types.GenerateContentConfig(
+                                system_instruction=formatted_corrected_traveler_system_prompt,
+                                tools=[get_local_attractions_opentripmap, get_destination_weather_forecast, get_currency_exchange]
+                            )
+                for chatbot in generate_streaming_response(self.client, chatbot, TRAVELER_MODEL, regenerate_config,
+                                                           conversation_history):
+                    yield chatbot
+
+
+    def verify_response(self, conversation_history: list) -> dict:
+        """
+        Verify ONLY the last response in the conversation using Gemini 2.5 Pro
+        """
+        try:
+            # Build context for verification - full conversation for context
+            context = "FULL CONVERSATION FOR CONTEXT:\n\n"
+            for i, (user_msg, bot_msg) in enumerate(conversation_history[:-1]):  # All except last
+                if user_msg:
+                    context += f"User {i + 1}: {user_msg}\n"
+                if bot_msg:
+                    context += f"Assistant {i + 1}: {bot_msg}\n"
+                context += "\n"
+
+            # Highlight the last exchange that needs verification
+            if conversation_history:
+                last_user, last_bot = conversation_history[-1]
+                context += "=" * 50 + "\n"
+                context += "LAST EXCHANGE TO VERIFY:\n"
+                context += "=" * 50 + "\n"
+                if last_user:
+                    context += f"User: {last_user}\n"
+                if last_bot:
+                    context += f"Assistant: {last_bot}\n"
+                context += "=" * 50 + "\n"
+
+            context += "\nPlease analyze ONLY the last assistant response above for accuracy and appropriateness, using the full conversation as context."
+            verification_config = types.GenerateContentConfig(
+                            system_instruction=verifier_system_prompt,
+                            response_mime_type="application/json",
+                            response_schema=VERIFICATION_SCHEMA
+                        )
+
+            # Get verification from Gemini 2.5 Pro
+            verification_response = self.client.models.generate_content(
+                model=VERIFIER_MODEL,
+                config=verification_config,
+                contents=context
+            )
+            # Parse the JSON response
+            verification_result = json.loads(verification_response.text)
+
+            return verification_result
+
+        except Exception as e:
+            # Return safe default on error
+            return {
+                "needs_correction": False,
+                "feedback": f"Verification failed: {str(e)}"
+            }
+
 conv_manager = ConversationManager()
-
-config = types.GenerateContentConfig(
-    system_instruction=system_prompt,
-    tools=[get_local_attractions_opentripmap, get_destination_weather_forecast, get_currency_exchange]
-)
-
 def chat_with_agent(chatbot):
     """
     Stream the response from Gemini API with proper handling of function calls and thoughts
     """
     # Build conversation history
     conversation_history = conv_manager.build_conversation_history(chatbot)
-
-    # Make the streaming request
-    response = client.models.generate_content_stream(
-        model="gemini-2.5-flash",
-        config=config,
-        contents=conversation_history,
+    config = types.GenerateContentConfig(
+        system_instruction=travel_system_prompt,
+        tools=[get_local_attractions_opentripmap, get_destination_weather_forecast, get_currency_exchange]
     )
 
-    full_response = ""
+    for chatbot in generate_streaming_response(conv_manager.client, chatbot, TRAVELER_MODEL, config, conversation_history):
+        yield chatbot
 
-    for chunk in response:
-        chunk_text = ""
+    # chatbot = [['which of these countries currency worth the less: albania, romania or hungary?',
+    # f'''Among Albania , Romania, and Hungary, the Hungarian Forint is worth the least.
+    # Here's the approximate value of 1 unit of each currency in USD:
+    # *   **Albanian Lek :** ~0.012 USD
+    # *   **Romanian Euro :** ~0.230 USD
+    # *   **Hungarian Forint :** ~0.5 USD']]
+    # ''']]
+    # conversation_history = [{'parts': [{'text': 'which of these countries currency worth the less: albania, romania or hungary?'}], 'role': 'user'}]
+    for chatbot in conv_manager.verify(chatbot, conversation_history):
+        yield chatbot
 
-        # Handle the response structure properly
-        if hasattr(chunk, 'candidates') and chunk.candidates:
-            candidate = chunk.candidates[0]
-            if hasattr(candidate, 'content') and candidate.content:
-
-                for part in candidate.content.parts:
-                    if hasattr(part, 'text') and part.text:
-                        # Regular text content
-                        chunk_text += part.text
-
-        # Fallback for simple text responses
-        elif hasattr(chunk, 'text'):
-            chunk_text = chunk.text
-
-        # Update response if we got new text
-        if chunk_text:
-            full_response += chunk_text
-            if chatbot:
-                chatbot[-1] = [chatbot[-1][0], full_response]
-                yield chatbot

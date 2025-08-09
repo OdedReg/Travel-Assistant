@@ -2,6 +2,8 @@ from datetime import datetime
 
 from utils import get_all_currency_codes
 
+TRAVELER_MODEL = "gemini-2.5-flash"
+VERIFIER_MODEL = "gemini-2.5-pro"
 NOT_FOUND_ERROR_INSTRUCTION = "try to answer without it, or ask the user to provide more information his question."
 ALLOWED_KINDS = {
     "restaurants", "cafes", "pubs", "bars", "malls",
@@ -13,7 +15,7 @@ ALLOWED_KINDS = {
     "nightclubs", "view_points", "sundials", "unclassified_objects"
 }
 
-packing_list_example = {
+PACKING_LIST_EXAMPLE = {
     "clothing": [
         "Mixed short and long-sleeved shirts",
         "Light jacket or sweater",
@@ -35,7 +37,27 @@ packing_list_example = {
     ]
 }
 
-system_prompt = f"""
+SYSTEM_PROMPT_METADATA = f"""
+Today is {datetime.now()}, and this is the relative time for the user questions. 
+Currency codes: {get_all_currency_codes()}
+"""
+
+VERIFICATION_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "needs_correction": {
+            "type": "boolean",
+            "description": "True if the last response needs to be removed and regenerated"
+        },
+        "feedback": {
+            "type": "string",
+            "description": "Detailed explanation of what was wrong and what to fix"
+        }
+    },
+    "required": ["needs_correction", "feedback"]
+}
+
+travel_system_prompt = f"""
 You are a Travel Assistant tasked with answering user questions with effective answers that feel natural and helpful.
 
 You are provided with multiple tools to help you answer the user questions. Beside of them, you can add your own knowledge to the answer.
@@ -44,8 +66,7 @@ If you don't find any of the tools relevant, try to answer using your own knowle
 You have access to conversation history, so you can refer to previous messages and maintain context throughout the conversation.
 Feel free to reference previous questions or build upon earlier topics when relevant.
 
-Today is {datetime.now()}, and this is the relative time for the user questions. 
-Currency codes: {get_all_currency_codes()}
+{SYSTEM_PROMPT_METADATA}
 
 Do not inform that user about the tools or arguments that you are using.
 If you are missing information about the tools or arguments that you are using, {NOT_FOUND_ERROR_INSTRUCTION}.
@@ -82,24 +103,54 @@ Tomorrow, Saturday, August 9, 2025, in London, the weather will be partly cloudy
 **Detailed Packing List**
 
 **Clothing:**
-  - {packing_list_example['clothing'][0]}
-  - {packing_list_example['clothing'][1]}
-  - {packing_list_example['clothing'][2]}
-  - {packing_list_example['clothing'][3]}
-  - {packing_list_example['clothing'][4]}
-  - {packing_list_example['clothing'][5]}
+  - {PACKING_LIST_EXAMPLE['clothing'][0]}
+  - {PACKING_LIST_EXAMPLE['clothing'][1]}
+  - {PACKING_LIST_EXAMPLE['clothing'][2]}
+  - {PACKING_LIST_EXAMPLE['clothing'][3]}
+  - {PACKING_LIST_EXAMPLE['clothing'][4]}
+  - {PACKING_LIST_EXAMPLE['clothing'][5]}
 
 **Toiletries Personal:**
-  - {packing_list_example['toiletries_personal'][0]}
-  - {packing_list_example['toiletries_personal'][1]}
-  - {packing_list_example['toiletries_personal'][2]}
+  - {PACKING_LIST_EXAMPLE['toiletries_personal'][0]}
+  - {PACKING_LIST_EXAMPLE['toiletries_personal'][1]}
+  - {PACKING_LIST_EXAMPLE['toiletries_personal'][2]}
 
 **Essentials:**
-  - {packing_list_example['essentials'][0]}
-  - {packing_list_example['essentials'][1]}
-  - {packing_list_example['essentials'][2]}
-  - {packing_list_example['essentials'][3]}
+  - {PACKING_LIST_EXAMPLE['essentials'][0]}
+  - {PACKING_LIST_EXAMPLE['essentials'][1]}
+  - {PACKING_LIST_EXAMPLE['essentials'][2]}
+  - {PACKING_LIST_EXAMPLE['essentials'][3]}
 
 
 Answer with concise and relevant responses.
+"""
+
+verifier_system_prompt = f"""
+You are a verifier for detecting confused responses or hallucinations in conversations with the LLM. Your task is to review the most recent LLM response and analyze the conversation's context. If the response seems inaccurate, confused, or contains hallucinated information, you will flag it and provide suggestions for correction.
+
+{SYSTEM_PROMPT_METADATA}
+
+### Task Instructions:
+- Review the most recent response from the LLM.
+- Identify if there is any confusion, misinformation, or hallucinated content.
+- If the response should be removed and answered again, return `True` for the boolean field `needs_revision`.
+- In the `correction_suggestions` string, provide a detailed explanation of what was wrong, including specific inaccuracies or irrelevant statements, and suggest how the response can be corrected.
+- If the answer is correct and doesn't require revision, return `False` for `needs_revision` and leave the `correction_suggestions` field empty.
+
+### Output Format:
+{{
+  "needs_correction": <boolean>,  # True if the last response should be removed and re-answered, False otherwise.
+  "feedback": "<string>"  # Explanation of what was wrong with the response and suggestions to fix it.
+}}
+"""
+
+corrected_traveler_system_prompt = """
+{travel_system_prompt}
+
+**IMPORTANT CORRECTION NEEDED**
+A verifier had checked your previous answer to the user question and gave you the following feedback:
+{feedback}
+
+Please provide a corrected response that addresses the issues mentioned above.
+Be extra careful about accuracy and relevance.
 """
