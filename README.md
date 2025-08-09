@@ -70,17 +70,17 @@ pip install -r requirements.txt
 Create a `.env` file in the root directory:
 
 ```env
-GOOGLE_API_KEY=your_google_gemini_api_key
-OPENWEATHER_API_KEY=your_openweather_api_key
-OPEN_TRIP_MAP_API_KEY=your_opentripmap_api_key
-EXCHANGERATE_API_KEY=your_exchangerate_api_key
+GOOGLE_API_KEY=your_google_api_key_here
+OPEN_TRIP_MAP_API_KEY=your_opentripmap_api_key_here
+OPENWEATHER_API_KEY=your_openweather_api_key_here
+EXCHANGERATE_API_KEY=your_exchangerate_api_key_here
 ```
 
 ### Step 3: API Key Setup
 
 1. **Google Gemini API**: Get your key from [Google AI Studio](https://aistudio.google.com)
-2. **OpenWeatherMap**: Register at [openweathermap.org](https://openweathermap.org/api)
-3. **OpenTripMap**: Sign up at [opentripmap.io](https://opentripmap.io/product)
+2. **OpenTripMap**: Sign up at [opentripmap.io](https://opentripmap.io/product)
+3. **OpenWeatherMap**: Register at [openweathermap.org](https://openweathermap.org/api)
 4. **ExchangeRate-API**: Get a free key at [exchangerate-api.com](https://exchangerate-api.com)
 
 ### Step 4: Run the Application
@@ -136,16 +136,22 @@ travel-assistant/
 
 1. **Attraction Discovery**:
    ```
-   User: "What are the most famous water parks near Tel Aviv?"
-   Assistant: The most famous water parks near Tel Aviv are:
+   User: 
+   "What are the most famous water parks near Tel Aviv?"
+   
+   Assistant: 
+   The most famous water parks near Tel Aviv are:
    * **Meimadyon**: Located in Yarkon Park in northern Tel Aviv, it's considered one of the largest in Israel, spanning 100 dunams. It was established in 1990 and attracts tens of thousands of visitors in the summer.
    * **Yamit 2000**: Situated in southeastern Holon, near Peres Park, this water park is also one of the largest in Israel. It started as a municipal pool in 1978 and expanded over the years.
    ```
 
 2. **Weather-Based Packing**:
    ```
-   User: "Create a packing list for Paris in May"
-   Assistant: For a business trip to Paris in May, you can expect mild and pleasant weather, but it's always wise to be prepared for some rain. Here's a suggested packing list:
+   User: 
+   "Create a packing list for Paris in May"
+   
+   Assistant: 
+   For a business trip to Paris in May, you can expect mild and pleasant weather, but it's always wise to be prepared for some rain. Here's a suggested packing list:
    **Clothing:**
    * **Business Attire:**
       * Suits or business casual outfits (blazers, dress shirts, blouses, smart trousers/skirts)
@@ -173,8 +179,10 @@ travel-assistant/
 
 3. **Destination Recommendations (with Verification Pipeline)**:
    ```
-   User: "Recommended destinations for a beach vacation in October"
+   User: 
+   "Recommended destinations for a beach vacation in October"
    
+   Assistant:
    [Initial Response]: 
    For a beach vacation in October, here are some excellent recommendations:
    * **The Caribbean:** Islands like **Barbados, St. Lucia, and Turks and Caicos** offer warm temperatures, low humidity, and minimal rainfall in October as it's typically outside the peak hurricane season.
