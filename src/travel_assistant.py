@@ -136,7 +136,6 @@ class ConversationManager:
             )
             # Parse the JSON response
             verification_result = json.loads(verification_response.text)
-            print(verification_result)
             return verification_result
 
         except Exception as e:
@@ -171,5 +170,5 @@ def chat_with_agent(chatbot: List[List[str]]) -> Generator[List[List[str]], None
                                                conversation_history):
         yield chatbot
 
-    # for chatbot in conv_manager.verify(chatbot, conversation_history):
-    #     yield chatbot
+    for chatbot in conv_manager.verify(chatbot, conversation_history):
+        yield chatbot
