@@ -1,6 +1,19 @@
-# 🌍 Travel Assistant Chat
+# <div align="center">🌍 Travel Assistant Chat</div>
 
-An intelligent travel planning assistant that demonstrates advanced conversational AI capabilities through natural language processing, external API integration, and sophisticated prompt engineering techniques.
+<div align="center">An intelligent travel planning assistant with advanced conversational AI capabilities</div>
+
+## 📋 Table of Contents
+
+- [Project Overview](#-project-overview)
+- [Architecture](#️-architecture)
+- [Installation & Setup](#-installation--setup)
+- [Project Structure](#-project-structure)
+- [Key Features](#-key-features)
+- [Usage Examples](#-usage-examples)
+- [Error Handling](#️-error-handling)
+- [Response Verification System](#-response-verification-system)
+- [Limitations](#-limitations)
+- [Future Improvements](#-future-improvements)
 
 ## 📋 Project Overview
 
@@ -9,10 +22,10 @@ This travel assistant is designed to handle diverse travel-related queries while
 ### Core Capabilities
 
 - **Destination Recommendations & Attractions**: Get personalized suggestions for places to visit
-- **Packing Lists**: Customized packing suggestions based on destination and weather
-- **Local Attractions**: Discover museums, historical sites, and points of interest
 - **Weather Forecasting**: Real-time weather data for travel planning
+- **Packing Lists**: Customized packing suggestions based on destination and weather
 - **Currency Exchange**: Current exchange rates for budget planning
+- **Local Attractions**: Discover museums, historical sites, and points of interest
 
 ## 🏗️ Architecture
 
@@ -26,7 +39,7 @@ This travel assistant is designed to handle diverse travel-related queries while
 
 ### Technical Stack
 
-- **Language**: Python 3.8+
+- **Language**: Python 3.12.11
 - **LLM Provider**: Google Gemini (2.5 Flash & 2.5 Pro)
 - **Interface**: Gradio
 - **External APIs**:
@@ -38,7 +51,7 @@ This travel assistant is designed to handle diverse travel-related queries while
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.12.11 or compatible version
 - API keys for external services
 
 ### Step 1: Clone and Install Dependencies
@@ -53,10 +66,10 @@ pip install -r requirements.txt
 Create a `.env` file in the root directory:
 
 ```env
-GOOGLE_API_KEY=your_google_api_key_here
-OPEN_TRIP_MAP_API_KEY=your_opentripmap_api_key_here
-OPENWEATHER_API_KEY=your_openweather_api_key_here
-EXCHANGERATE_API_KEY=your_exchangerate_api_key_here
+GOOGLE_API_KEY=your_google_gemini_api_key
+OPENWEATHER_API_KEY=your_openweather_api_key
+OPEN_TRIP_MAP_API_KEY=your_opentripmap_api_key
+EXCHANGERATE_API_KEY=your_exchangerate_api_key
 ```
 
 ### Step 3: API Key Setup
@@ -98,17 +111,15 @@ travel-assistant/
 ### 1. Conversation-First Design
 - Maintains context across multiple exchanges
 - Handles follow-up questions naturally
-- Supports complex, multi-part queries
 
 ### 2. Chain-of-Thought Reasoning
 - Explicit reasoning steps in prompts
-- Decision-making transparency
+- Conditional chain of thought example
 - Tool selection logic
 
 ### 3. Response Verification
-- Dual-model verification system
+- Stronger model used for verification
 - Automatic error detection and correction
-- Quality assurance layer
 
 ### 4. Smart Data Integration
 - Intelligent decision-making between API data and LLM knowledge
@@ -131,28 +142,11 @@ travel-assistant/
    Assistant: [Checks weather forecast, creates detailed packing list]
    ```
 
-3. **Budget Planning**:
+3. **Destination Recommendations**:
    ```
-   User: "How much is 500 USD in Japanese Yen?"
-   Assistant: [Gets current exchange rates and calculates conversion]
+   User: "Recommended destinations for a beach vacation in October"
+   Assistant: [Analyzes global beach destinations optimal for October travel]
    ```
-
-### Try These Examples
-- "What are the best beaches in Thailand for October?"
-- "I'm traveling to London tomorrow, what should I pack?"
-- "Show me historical attractions in Rome"
-- "What's the weather like in New York this weekend?"
-
-## 🔧 Configuration
-
-### Conversation Settings
-- **Max History**: 10 exchanges (configurable in `ConversationManager`)
-- **API Timeouts**: Standard timeout handling for all external APIs
-- **Response Streaming**: Real-time response generation
-
-### Model Configuration
-- **Primary Model**: Gemini 2.5 Flash (for main conversations)
-- **Verification Model**: Gemini 2.5 Pro (for response validation)
 
 ## 🛡️ Error Handling
 
@@ -161,7 +155,7 @@ The system implements robust error handling:
 - **API Failures**: Graceful fallback to LLM knowledge
 - **Rate Limiting**: Built-in retry logic
 - **Invalid Inputs**: User-friendly error messages
-- **Network Issues**: Timeout handling and recovery
+- **Timeout handling**: Recovery mechanisms for external APIs
 
 ## 🔄 Response Verification System
 
@@ -178,8 +172,8 @@ The assistant uses a dual-model approach:
 - Exchange rates updated daily (not real-time)
 - Limited conversation history (10 exchanges) to manage token usage
 
-## 🤝 Future Improvements
+## 🚀 Future Improvements
 
-- Additional API integrations (Hotels, Flights, etc.)
-- Extended conversation memory
-- Advanced personalization features
+- **Additional API integrations** (Hotels, Flights, etc.)
+- **Extended conversation memory**
+- **Advanced personalization features**
