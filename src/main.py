@@ -97,7 +97,7 @@ with gr.Blocks(
     # Add some example queries
     gr.Examples(
         examples=[
-            "What are the top museums in Tokyo?",
+            "What are the most famous water parks near Tel Aviv?",
             "Create a packing list for a business trip to Paris in May",
             "Recommended destinations for a beach vacation in October",
         ],

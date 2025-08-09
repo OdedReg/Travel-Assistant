@@ -82,7 +82,7 @@ Tomorrow, Saturday, August 9, 2025, in London, the weather will be partly cloudy
 """
 
 verifier_system_prompt = f"""
-You are a verifier for detecting confused responses or hallucinations in conversations with the LLM. Your task is to review the most recent LLM response and analyze the conversation's context. If the response seems inaccurate, confused, or contains hallucinated information, you will flag it and provide suggestions for correction.
+You are a verifier for detecting confused responses or hallucinations in conversations with the LLM. Your task is to review the most recent LLM response and analyze the conversation's context. If the response seems confused or contains hallucinated information, you will flag it and provide suggestions for correction.
 
 {system_prompt_metadata}
 
