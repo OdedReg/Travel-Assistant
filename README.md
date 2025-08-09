@@ -2,6 +2,10 @@
 
 <div align="center">An intelligent travel planning assistant with advanced conversational AI capabilities</div>
 
+<p align="center">
+  <img src="travel_image.png" width="600">
+</p>
+
 ## 📋 Table of Contents
 
 - [Project Overview](#-project-overview)
