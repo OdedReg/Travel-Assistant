@@ -79,7 +79,7 @@ EXCHANGERATE_API_KEY=your_exchangerate_api_key_here
 ### Step 3: API Key Setup
 
 1. **Google Gemini API**: Get your key from [Google AI Studio](https://aistudio.google.com)
-2. **OpenTripMap**: Sign up at [opentripmap.io](https://opentripmap.org/product)
+2. **OpenTripMap**: Sign up at [opentripmap.io](https://dev.opentripmap.org/product)
 3. **OpenWeatherMap**: Register at [openweathermap.org](https://openweathermap.org/api)
 4. **ExchangeRate-API**: Get a free key at [exchangerate-api.com](https://exchangerate-api.com)
 
