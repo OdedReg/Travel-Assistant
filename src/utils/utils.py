@@ -1,5 +1,5 @@
 import os
-from typing import Any, List
+from typing import Any, List, Dict, Generator
 
 import requests
 from dotenv import load_dotenv
@@ -24,11 +24,13 @@ def get_env_variable(var_name: str) -> Any:
         raise ValueError(f"Environment variable '{var_name}' not found.")
     return value
 
-def get_all_currency_codes() -> dict:
-    """Get all supported currency codes from ExchangeRate-API.com.
+
+def get_all_currency_codes() -> Dict[str, Any]:
+    """
+    Get all supported currency codes from ExchangeRate-API.com.
 
     Returns:
-        A dictionary containing a list of supported currency codes, or an error message.
+        dict: A dictionary containing a list of supported currency codes or an error message.
     """
     url = f"https://v6.exchangerate-api.com/v6/{get_env_variable('EXCHANGERATE_API_KEY')}/codes"
 
@@ -46,11 +48,19 @@ def get_all_currency_codes() -> dict:
     except requests.exceptions.RequestException as e:
         return {"error": f"An error occurred during the API request: {str(e)}."}
 
+
 def get_genai_client() -> genai.Client:
+    """
+    Creates and returns a GenAI client using the provided API key.
+
+    Returns:
+        genai.Client: The GenAI client instance.
+    """
     return genai.Client(api_key=get_env_variable("GOOGLE_API_KEY"))
 
 
-def generate_streaming_response(client: Client, chatbot: List,  model_name: str, config: GenerateContentConfig, contents: List):
+def generate_streaming_response(client: Client, chatbot: List[List[str]], model_name: str,
+                                config: GenerateContentConfig, contents: List[str]) -> Generator[List[List[str]], None, None]:
     """
     Generate a streaming response from a specified model, updating the conversation incrementally.
 
@@ -77,10 +87,11 @@ def generate_streaming_response(client: Client, chatbot: List,  model_name: str,
         if hasattr(chunk, 'candidates') and chunk.candidates:
             candidate = chunk.candidates[0]
             if hasattr(candidate, 'content') and candidate.content:
-                for part in candidate.content.parts:
-                    if hasattr(part, 'text') and part.text:
-                        # Regular text content
-                        chunk_text += part.text
+                if hasattr(candidate.content, 'parts') and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        if hasattr(part, 'text') and part.text:
+                            # Regular text content
+                            chunk_text += part.text
 
         # Fallback for simple text responses
         elif hasattr(chunk, 'text'):

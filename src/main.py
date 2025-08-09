@@ -1,3 +1,5 @@
+from typing import Tuple, List
+
 import gradio as gr
 
 from src.travel_assistant import chat_with_agent
@@ -13,10 +15,11 @@ with gr.Blocks(
     gr.Markdown(
         """
         Ask me anything about travel! I can help you with:
-        - Weather information for destinations
-        - Currency exchange rates
         - Local attractions and points of interest
         - Travel recommendations
+        - Packing list
+        - Weather information for destinations
+        - Currency exchange rates
         - And much more!
         """
     )
@@ -40,12 +43,31 @@ with gr.Blocks(
                        "https://cdn-icons-png.flaticon.com/512/684/684908.png"),
     )
 
+
     # Event handlers
-    def clear_chat():
+    def clear_chat() -> Tuple[str, List[List[str]]]:
+        """
+        Clears the chat by returning an empty message and an empty chat history.
+
+        Returns:
+            A tuple with an empty string for the message and an empty list for the chat history.
+        """
         return "", []
 
-    def submit_message(message, chatbot):
+
+    def submit_message(message: str, chatbot: List[List[str]]) -> Tuple[str, List[List[str]]]:
+        """
+        Handles the submission of a message, adding it to the chat history.
+
+        Args:
+            message (str): The message sent by the user.
+            chatbot (List[List[str]]): The current chat history.
+
+        Returns:
+            A tuple with an empty string for the input message and the updated chat history.
+        """
         return "", chatbot + [[message, None]]
+
 
     # Connect the events
     msg.submit(
@@ -75,10 +97,10 @@ with gr.Blocks(
     # Add some example queries
     gr.Examples(
         examples=[
-            "Help me build a packing suggestions for a business trip to Paris in October",
-            "What are the most famous water parks near Tel Aviv?",
             "What are the top attractions in Tokyo?",
-            "Tell me about local currency in Thailand"
+            "Create a packing list for a business trip to Paris in October",
+            "Tell me about local currency in Thailand",
+            "Recommended destinations for a beach vacation in October",
         ],
         inputs=msg,
         label="Try these examples:"

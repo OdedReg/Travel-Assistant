@@ -1,37 +1,37 @@
-import os
 from datetime import datetime, timedelta
+from typing import Dict, Any
 
 import requests
 
 from src.constants import NOT_FOUND_ERROR_INSTRUCTION, ALLOWED_KINDS
-from utils import get_env_variable
+from src.utils.utils import get_env_variable
 
 OPENWEATHER_API_KEY = get_env_variable('OPENWEATHER_API_KEY')
-AMADEUS_API_KEY = os.getenv('AMADEUS_API_KEY')
-AMADEUS_API_SECRET = os.getenv('AMADEUS_API_SECRET')
 OPEN_TRIP_MAP_API_KEY = get_env_variable('OPEN_TRIP_MAP_API_KEY')
 EXCHANGERATE_API_KEY = get_env_variable('EXCHANGERATE_API_KEY')
 
-def get_local_attractions_opentripmap(destination: str, kind: str, radius: int = 10000, limit: int = 5) -> dict:
+
+def get_local_attractions_opentripmap(destination: str, kind: str, radius: int = 10000, limit: int = 5) -> Dict[str, Any]:
     f"""
-     Retrieve top-rated local attractions near a given destination using the OpenTripMap API.
+    Retrieve top-rated local attractions near a given destination using the OpenTripMap API.
 
-     Args:
-         destination (str): The name of the city or location to search around (e.g., "Rome", "Tokyo").
-         kind (str):  attraction type to filter by. Allowed values: {list(ALLOWED_KINDS)}.
-         radius (int, optional): The search radius in meters. Default is 10,000 (10 km).
-         limit (int, optional): The maximum number of attractions to return. Default is 5.
+    Args:
+        destination (str): The name of the city or location to search around (e.g., "Rome", "Tokyo").
+        kind (str): Attraction type to filter by. Allowed values: {list(ALLOWED_KINDS)}.
+        radius (int, optional): The search radius in meters. Default is 10,000 (10 km).
+        limit (int, optional): The maximum number of attractions to return. Default is 5.
 
-     Returns:
-         dict: A dictionary containing:
-             - 'attractions': A list of dictionaries, each containing:
-                 - 'name': Name of the attraction
-                 - 'kind': Types/categories
-                 - 'description': Short Wikipedia-style summary (if available)
-                 - 'url': Link to a Wikipedia article (if available)
-     """
+    Returns:
+        dict: A dictionary containing:
+            - 'attractions': A list of dictionaries, each containing:
+                - 'name': Name of the attraction
+                - 'kind': Types/categories
+                - 'description': Short Wikipedia-style summary (if available)
+                - 'url': Link to a Wikipedia article (if available)
+    """
     if kind not in ALLOWED_KINDS:
-        return {"error": f"Invalid 'kind': {kind}. Must be one of: {', '.join(ALLOWED_KINDS)}. {NOT_FOUND_ERROR_INSTRUCTION}"}
+        return {
+            "error": f"Invalid 'kind': {kind}. Must be one of: {', '.join(ALLOWED_KINDS)}. {NOT_FOUND_ERROR_INSTRUCTION}"}
     try:
         # Step 1: Get coordinates of the destination
         geocode_url = f"https://api.opentripmap.com/0.1/en/places/geoname"
@@ -78,7 +78,7 @@ def get_local_attractions_opentripmap(destination: str, kind: str, radius: int =
         return {"error": f"Attractions API error: {str(e)}. {NOT_FOUND_ERROR_INSTRUCTION}."}
 
 
-def get_destination_weather_forecast(destination: str, day: int, month: int, year: int) -> dict:
+def get_destination_weather_forecast(destination: str, day: int, month: int, year: int) -> Dict[str, Any]:
     f"""
     Get weather forecast for a destination from {datetime.today()} to {datetime.today() + timedelta(days=5)}.
 
@@ -115,7 +115,8 @@ def get_destination_weather_forecast(destination: str, day: int, month: int, yea
         geo_data = geo_response.json()
 
         if not geo_data:
-            return {"error": f"Location '{destination}' not found, assume the weather is based on your knowledge about the location."}
+            return {
+                "error": f"Location '{destination}' not found, assume the weather is based on your knowledge about the location."}
 
         lat, lon = geo_data[0]['lat'], geo_data[0]['lon']
 
@@ -162,7 +163,7 @@ def get_destination_weather_forecast(destination: str, day: int, month: int, yea
         return {"error": f"Weather API error: {str(e)}, assume the weather is based on your knowledge."}
 
 
-def get_currency_exchange(from_currency: str, to_currency: str, amount: float) -> dict:
+def get_currency_exchange(from_currency: str, to_currency: str, amount: float) -> Dict[str, Any]:
     """Get current currency exchange rates.
 
     Args:
@@ -197,5 +198,3 @@ def get_currency_exchange(from_currency: str, to_currency: str, amount: float) -
 
     except Exception as e:
         return {"error": f"Currency exchange error: {str(e)}. {NOT_FOUND_ERROR_INSTRUCTION}."}
-
-print(get_destination_weather_forecast("Paris",day=8, month=8, year=2025))
