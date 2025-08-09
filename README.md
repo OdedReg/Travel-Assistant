@@ -95,15 +95,15 @@ travel-assistant/
 ├── src/
 │   ├── travel_assistant.py # Main conversation logic
 │   ├── travel_tools.py     # External API integrations
-│   ├── constants.py        # Configuration constants
+│   ├── constants.py        
 │   ├── prompts/
 │   │   ├── prompts.py      # System prompts and examples
 │   │   └── schemas.py      # JSON schemas for structured responses
 │   └── utils/
-│       └── utils.py        # Utility functions
-├── requirements.txt        # Python dependencies
-├── .env                   # Environment variables (create this)
-└── README.md              # This file
+│       └── utils.py        
+├── requirements.txt        
+├── .env                   
+└── README.md              
 ```
 
 ## 🎯 Key Features
