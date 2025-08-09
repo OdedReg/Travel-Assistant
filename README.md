@@ -85,8 +85,8 @@ EXCHANGERATE_API_KEY=your_exchangerate_api_key_here
 
 ### Step 4: Run the Application
 
-```bash
-python main.py
+```
+Run src\main.py
 ```
 
 The application will launch at `http://127.0.0.1:7860`
