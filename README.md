@@ -61,7 +61,7 @@ This travel assistant is designed to handle diverse travel-related queries while
 ### Step 1: Clone and Install Dependencies
 
 ```bash
-git clone [<repository-url>](https://github.com/OdedReg/Travel-Assistant)
+git clone https://github.com/OdedReg/Travel-Assistant
 pip install -r requirements.txt
 ```
 
